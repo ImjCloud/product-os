@@ -1,0 +1,10 @@
+ALTER TABLE "Product" ADD COLUMN "archivedAt" TIMESTAMP(3);
+CREATE TABLE "Notification" (
+  "id" TEXT NOT NULL, "organisationId" TEXT NOT NULL, "userId" TEXT NOT NULL,
+  "type" TEXT NOT NULL, "title" TEXT NOT NULL, "body" TEXT NOT NULL,
+  "entityType" TEXT, "entityId" TEXT, "readAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "Notification_organisationId_userId_readAt_createdAt_idx" ON "Notification"("organisationId", "userId", "readAt", "createdAt");
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_organisationId_fkey" FOREIGN KEY ("organisationId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

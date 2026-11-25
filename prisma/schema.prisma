@@ -1,0 +1,1233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  PRODUCT_MANAGER
+  CONTRIBUTOR
+  VIEWER
+}
+
+enum FeedbackStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RequirementStatus {
+  DISCOVERY
+  SCOPED
+  IN_BUILD
+  SHIPPED
+}
+
+enum ReleaseStatus {
+  PLANNING
+  READY
+  RELEASED
+}
+
+enum DeploymentStatus {
+  PLANNED
+  IN_PROGRESS
+  SUCCEEDED
+  FAILED
+  ROLLED_BACK
+}
+
+enum MetricDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+enum ActionItemStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+enum ActionItemPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActionItemVisibility {
+  PRIVATE
+  SHARED
+}
+
+enum PersonalActionStatus {
+  TODO
+  IN_PROGRESS
+  WAITING
+  DONE
+  CANCELLED
+}
+
+enum PersonalActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PersonalShareAccess {
+  VIEW
+  EDIT
+}
+
+enum InitiativeStatus {
+  PROPOSED
+  DISCOVERY
+  PLANNING
+  IN_PROGRESS
+  AT_RISK
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+  AT_RISK
+}
+
+model Organisation {
+  id                        String                     @id @default(cuid())
+  name                      String
+  slug                      String                     @unique
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  memberships               Membership[]
+  products                  Product[]
+  feedback                  Feedback[]
+  requirements              Requirement[]
+  releases                  Release[]
+  deployments               Deployment[]
+  metrics                   Metric[]
+  auditLogs                 AuditLog[]
+  actionItems               ActionItem[]
+  legacyImports             LegacyImport[]
+  metricSnapshots           MetricSnapshot[]
+  actionItemComments        ActionItemComment[]
+  notifications             Notification[]
+  digestSnapshots           DigestSnapshot[]
+  initiatives               Initiative[]
+  workflowStages            WorkflowStage[]
+  workflowTransitions       WorkflowTransition[]
+  documentImports           DocumentImport[]
+  documentCandidates        DocumentCandidate[]
+  decisions                 Decision[]
+  risks                     Risk[]
+  dependencies              Dependency[]
+  stakeholders              Stakeholder[]
+  issues                    Issue[]
+  changeRequests            ChangeRequest[]
+  processAnalyses           ProcessAnalysis[]
+  testCases                 TestCase[]
+  testExecutions            TestExecution[]
+  benefitMeasures           BenefitMeasure[]
+  benefitMeasurements       BenefitMeasurement[]
+  uatCycles                 UatCycle[]
+  stakeholderEngagementLogs StakeholderEngagementLog[]
+  evidenceItems             EvidenceItem[]
+  approvalRequests          ApprovalRequest[]
+  personalTrackers          PersonalTracker[]
+  personalTrackerShares     PersonalTrackerShare[]
+  personalActionItems       PersonalActionItem[]
+  personalActionShares      PersonalActionShare[]
+  personalActionUpdates     PersonalActionUpdate[]
+}
+
+model User {
+  id                       String                 @id @default(cuid())
+  email                    String                 @unique
+  name                     String?
+  passwordHash             String?
+  entraObjectId            String?                @unique
+  entraTenantId            String?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  memberships              Membership[]
+  auditLogs                AuditLog[]
+  assignedActionItems      ActionItem[]           @relation("ActionItemAssignee")
+  createdActionItems       ActionItem[]           @relation("ActionItemCreator")
+  actionItemComments       ActionItemComment[]
+  notifications            Notification[]
+  workflowTransitions      WorkflowTransition[]
+  approvalRequestsMade     ApprovalRequest[]      @relation("ApprovalRequester")
+  approvalRequestsAssigned ApprovalRequest[]      @relation("ApprovalApprover")
+  personalTrackers         PersonalTracker[]      @relation("PersonalTrackerOwner")
+  personalTrackerShares    PersonalTrackerShare[]
+  personalActionsCreated   PersonalActionItem[]   @relation("PersonalActionCreator")
+  personalActionShares     PersonalActionShare[]
+  personalActionUpdates    PersonalActionUpdate[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  organisationId String
+  userId         String
+  role           MembershipRole @default(CONTRIBUTOR)
+  createdAt      DateTime       @default(now())
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, userId])
+  @@index([userId, role])
+}
+
+model Product {
+  id                        String                     @id @default(cuid())
+  organisationId            String
+  name                      String
+  description               String?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  archivedAt                DateTime?
+  organisation              Organisation               @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  feedback                  Feedback[]
+  requirements              Requirement[]
+  releases                  Release[]
+  deployments               Deployment[]
+  metrics                   Metric[]
+  actionItems               ActionItem[]
+  metricSnapshots           MetricSnapshot[]
+  digestSnapshots           DigestSnapshot[]
+  initiatives               Initiative[]
+  workflowStages            WorkflowStage[]
+  documentImports           DocumentImport[]
+  documentCandidates        DocumentCandidate[]
+  decisions                 Decision[]
+  risks                     Risk[]
+  dependencies              Dependency[]
+  stakeholders              Stakeholder[]
+  issues                    Issue[]
+  changeRequests            ChangeRequest[]
+  processAnalyses           ProcessAnalysis[]
+  testCases                 TestCase[]
+  testExecutions            TestExecution[]
+  benefitMeasures           BenefitMeasure[]
+  benefitMeasurements       BenefitMeasurement[]
+  uatCycles                 UatCycle[]
+  stakeholderEngagementLogs StakeholderEngagementLog[]
+  evidenceItems             EvidenceItem[]
+  approvalRequests          ApprovalRequest[]
+  personalTrackers          PersonalTracker[]
+
+  @@unique([organisationId, name])
+  @@index([organisationId, createdAt])
+}
+
+model Feedback {
+  id             String         @id @default(cuid())
+  organisationId String
+  productId      String
+  text           String
+  source         String         @default("Internal")
+  segment        String?
+  theme          String?
+  sentiment      Sentiment      @default(NEUTRAL)
+  severity       Severity       @default(MEDIUM)
+  status         FeedbackStatus @default(OPEN)
+  owner          String?
+  dueAt          DateTime?
+  occurredAt     DateTime       @default(now())
+  externalRef    String?
+  sourceUrl      String?
+  requirementId  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requirement    Requirement?   @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  actionItems    ActionItem[]
+
+  @@index([organisationId, productId, status])
+  @@index([organisationId, dueAt])
+  @@index([externalRef])
+}
+
+model Requirement {
+  id             String            @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  problem        String            @default("")
+  userStory      String            @default("")
+  acceptance     String            @default("")
+  status         RequirementStatus @default(DISCOVERY)
+  owner          String?
+  reach          Int               @default(100)
+  impact         Float             @default(1)
+  confidence     Float             @default(50)
+  effort         Float             @default(2)
+  releaseId      String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organisation   Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  release        Release?          @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  feedback       Feedback[]
+  testCases      TestCase[]
+  actionItems    ActionItem[]
+  initiativeId   String?
+  initiative     Initiative?       @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([initiativeId])
+  @@index([organisationId, productId, status])
+  @@index([releaseId])
+}
+
+model Release {
+  id             String         @id @default(cuid())
+  organisationId String
+  productId      String
+  version        String
+  targetDate     DateTime?
+  status         ReleaseStatus  @default(PLANNING)
+  decisionLog    Json           @default("[]")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requirements   Requirement[]
+  checks         ReleaseCheck[]
+  metrics        Metric[]
+  actionItems    ActionItem[]
+  deployments    Deployment[]
+
+  @@unique([productId, version])
+  @@index([organisationId, targetDate, status])
+}
+
+model Deployment {
+  id                String           @id @default(cuid())
+  organisationId    String
+  productId         String
+  releaseId         String
+  environment       String
+  status            DeploymentStatus @default(PLANNED)
+  versionLabel      String           @default("")
+  plannedAt         DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  deployedBy        String           @default("")
+  rollbackPlan      String           @default("") @db.Text
+  verificationNotes String           @default("") @db.Text
+  failureReason     String           @default("") @db.Text
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  organisation      Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product           Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  release           Release          @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, status])
+  @@index([releaseId, createdAt])
+}
+
+model ReleaseCheck {
+  id        String   @id @default(cuid())
+  releaseId String
+  key       String
+  label     String
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  release   Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseId, key])
+}
+
+model Metric {
+  id             String           @id @default(cuid())
+  organisationId String
+  productId      String
+  releaseId      String?
+  name           String
+  unit           String?
+  direction      MetricDirection  @default(HIGHER_IS_BETTER)
+  baseline       Float
+  target         Float
+  actual         Float
+  reviewDate     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organisation   Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  release        Release?         @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  snapshots      MetricSnapshot[]
+
+  @@index([organisationId, productId, reviewDate])
+}
+
+model ActionItem {
+  id             String               @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  description    String               @default("")
+  status         ActionItemStatus     @default(TODO)
+  priority       ActionItemPriority   @default(MEDIUM)
+  visibility     ActionItemVisibility @default(PRIVATE)
+  assigneeId     String?
+  assigneeLabel  String?
+  dueAt          DateTime?
+  feedbackId     String?
+  requirementId  String?
+  releaseId      String?
+  createdById    String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organisation   Organisation         @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  assignee       User?                @relation("ActionItemAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy      User                 @relation("ActionItemCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  feedback       Feedback?            @relation(fields: [feedbackId], references: [id], onDelete: SetNull)
+  requirement    Requirement?         @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  release        Release?             @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  comments       ActionItemComment[]
+  initiativeId   String?
+  initiative     Initiative?          @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([initiativeId])
+  @@index([organisationId, productId, status, priority])
+  @@index([organisationId, productId, visibility, createdById])
+  @@index([organisationId, productId, visibility, createdAt, id])
+  @@index([organisationId, assigneeId, dueAt])
+  @@index([feedbackId])
+  @@index([requirementId])
+  @@index([releaseId])
+}
+
+model PersonalTracker {
+  id             String                 @id @default(cuid())
+  organisationId String
+  productId      String
+  ownerId        String
+  title          String
+  description    String                 @default("")
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  organisation   Organisation           @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  owner          User                   @relation("PersonalTrackerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  shares         PersonalTrackerShare[]
+  actions        PersonalActionItem[]
+
+  @@index([organisationId, productId, ownerId, updatedAt])
+}
+
+model PersonalTrackerShare {
+  id             String              @id @default(cuid())
+  organisationId String
+  trackerId      String
+  userId         String
+  access         PersonalShareAccess @default(VIEW)
+  createdAt      DateTime            @default(now())
+  organisation   Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  tracker        PersonalTracker     @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([trackerId, userId])
+  @@index([organisationId, userId])
+}
+
+model PersonalActionItem {
+  id             String                 @id @default(cuid())
+  organisationId String
+  trackerId      String
+  createdById    String
+  title          String
+  description    String                 @default("")
+  status         PersonalActionStatus   @default(TODO)
+  priority       PersonalActionPriority @default(MEDIUM)
+  dueAt          DateTime?
+  followUpAt     DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  organisation   Organisation           @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  tracker        PersonalTracker        @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+  createdBy      User                   @relation("PersonalActionCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  shares         PersonalActionShare[]
+  updates        PersonalActionUpdate[]
+
+  @@index([organisationId, trackerId, status, dueAt])
+  @@index([organisationId, trackerId, followUpAt])
+}
+
+model PersonalActionShare {
+  id             String              @id @default(cuid())
+  organisationId String
+  actionItemId   String
+  userId         String
+  access         PersonalShareAccess @default(VIEW)
+  createdAt      DateTime            @default(now())
+  organisation   Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  actionItem     PersonalActionItem  @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([actionItemId, userId])
+  @@index([organisationId, userId])
+}
+
+model PersonalActionUpdate {
+  id             String                @id @default(cuid())
+  organisationId String
+  actionItemId   String
+  authorId       String
+  note           String
+  status         PersonalActionStatus?
+  createdAt      DateTime              @default(now())
+  organisation   Organisation          @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  actionItem     PersonalActionItem    @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  author         User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, actionItemId, createdAt])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organisationId String
+  actorUserId    String?
+  entityType     String
+  entityId       String
+  action         String
+  before         Json?
+  after          Json?
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  actor          User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, entityType, entityId, createdAt])
+}
+
+model LegacyImport {
+  id             String       @id @default(cuid())
+  organisationId String
+  fingerprint    String
+  counts         Json
+  warnings       Json
+  sourcePayload  Json
+  createdById    String
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, fingerprint])
+  @@index([organisationId, createdAt])
+}
+
+model MetricSnapshot {
+  id             String          @id @default(cuid())
+  organisationId String
+  productId      String
+  metricId       String
+  value          Float
+  target         Float
+  baseline       Float
+  direction      MetricDirection
+  note           String?
+  recordedAt     DateTime        @default(now())
+  organisation   Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  metric         Metric          @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, metricId, recordedAt])
+}
+
+model ActionItemComment {
+  id             String       @id @default(cuid())
+  organisationId String
+  actionItemId   String
+  authorId       String
+  body           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  actionItem     ActionItem   @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId, actionItemId, createdAt])
+}
+
+model Notification {
+  id             String       @id @default(cuid())
+  organisationId String
+  userId         String
+  type           String
+  title          String
+  body           String
+  entityType     String?
+  entityId       String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, userId, readAt, createdAt])
+}
+
+model DigestSnapshot {
+  id             String       @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  summary        Json
+  createdById    String
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, createdAt])
+}
+
+model Initiative {
+  id                  String                @id @default(cuid())
+  organisationId      String
+  productId           String
+  name                String
+  objective           String                @default("")
+  description         String                @default("")
+  status              InitiativeStatus      @default(PROPOSED)
+  stageKey            String                @default("INTAKE")
+  ownerLabel          String?
+  startDate           DateTime?
+  targetDate          DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  organisation        Organisation          @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product             Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requirements        Requirement[]
+  actionItems         ActionItem[]
+  milestones          InitiativeMilestone[]
+  workflowTransitions WorkflowTransition[]
+  decisions           Decision[]
+  risks               Risk[]
+  dependencies        Dependency[]
+  stakeholders        Stakeholder[]
+  issues              Issue[]
+  changeRequests      ChangeRequest[]
+  processAnalyses     ProcessAnalysis[]
+  testCases           TestCase[]
+  benefitMeasures     BenefitMeasure[]
+  evidenceItems       EvidenceItem[]
+
+  @@index([organisationId, productId, status])
+  @@index([productId, targetDate])
+}
+
+model InitiativeMilestone {
+  id           String          @id @default(cuid())
+  initiativeId String
+  title        String
+  description  String          @default("")
+  status       MilestoneStatus @default(UPCOMING)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  initiative   Initiative      @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+
+  @@index([initiativeId, sortOrder])
+}
+
+model WorkflowStage {
+  id              String       @id @default(cuid())
+  organisationId  String
+  productId       String
+  key             String
+  name            String
+  description     String       @default("")
+  sortOrder       Int
+  isGate          Boolean      @default(false)
+  isActive        Boolean      @default(true)
+  transitionRules Json         @default("{}")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organisation    Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, key])
+  @@index([organisationId, productId, sortOrder])
+}
+
+model WorkflowTransition {
+  id             String       @id @default(cuid())
+  organisationId String
+  initiativeId   String
+  actorUserId    String?
+  fromStageKey   String
+  toStageKey     String
+  note           String       @default("")
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative     Initiative   @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+  actor          User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, initiativeId, createdAt])
+}
+
+enum DocumentImportStatus {
+  EXTRACTED
+  NEEDS_REVIEW
+  PARTIALLY_IMPORTED
+  IMPORTED
+  FAILED
+}
+
+enum DocumentCandidateType {
+  REQUIREMENT
+  ACTION_ITEM
+  FEEDBACK
+  DECISION
+  RISK
+  DEPENDENCY
+  QUESTION
+}
+
+enum DocumentCandidateStatus {
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  IMPORTED
+}
+
+model DocumentImport {
+  id             String               @id @default(cuid())
+  organisationId String
+  productId      String
+  uploadedById   String
+  fileName       String
+  mimeType       String
+  fileSize       Int
+  fileHash       String
+  extractedText  String               @db.Text
+  fileContent    Bytes
+  extractionNote String               @default("")
+  status         DocumentImportStatus @default(NEEDS_REVIEW)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organisation   Organisation         @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  candidates     DocumentCandidate[]
+
+  @@unique([organisationId, fileHash])
+  @@index([organisationId, productId, createdAt])
+}
+
+model DocumentCandidate {
+  id                 String                  @id @default(cuid())
+  organisationId     String
+  productId          String
+  importId           String
+  type               DocumentCandidateType
+  status             DocumentCandidateStatus @default(NEEDS_REVIEW)
+  title              String
+  description        String                  @default("")
+  ownerLabel         String?
+  dueAt              DateTime?
+  priority           String                  @default("MEDIUM")
+  confidence         Int                     @default(50)
+  confidenceBand     String                  @default("LOW")
+  sourceReference    String                  @default("")
+  rationale          String                  @default("")
+  reviewNote         String                  @default("")
+  importedEntityId   String?
+  importedEntityType String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  organisation       Organisation            @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product            Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  import             DocumentImport          @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, status, type])
+  @@index([importId, sourceReference])
+}
+
+enum DecisionStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+  DEFERRED
+  SUPERSEDED
+}
+
+enum RiskStatus {
+  IDENTIFIED
+  MITIGATING
+  ACCEPTED
+  CLOSED
+}
+
+enum DependencyStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  BLOCKED
+}
+
+model Decision {
+  id             String         @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  context        String         @default("")
+  options        Json           @default("[]")
+  rationale      String         @default("")
+  outcome        String         @default("")
+  status         DecisionStatus @default(PROPOSED)
+  ownerLabel     String?
+  decidedAt      DateTime?
+  initiativeId   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?    @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, createdAt])
+  @@index([initiativeId])
+}
+
+model Risk {
+  id             String       @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  description    String       @default("")
+  cause          String       @default("")
+  consequence    String       @default("")
+  mitigation     String       @default("")
+  contingency    String       @default("")
+  probability    Int          @default(3)
+  impact         Int          @default(3)
+  status         RiskStatus   @default(IDENTIFIED)
+  ownerLabel     String?
+  reviewDate     DateTime?
+  initiativeId   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?  @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, reviewDate])
+  @@index([initiativeId])
+}
+
+model Dependency {
+  id             String           @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  description    String           @default("")
+  dependencyType String           @default("INTERNAL")
+  dependsOn      String           @default("")
+  status         DependencyStatus @default(OPEN)
+  ownerLabel     String?
+  neededBy       DateTime?
+  initiativeId   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organisation   Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?      @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, neededBy])
+  @@index([initiativeId])
+}
+
+enum StakeholderEngagement {
+  UNAWARE
+  RESISTANT
+  NEUTRAL
+  SUPPORTIVE
+  LEADING
+}
+
+enum IssueStatus {
+  OPEN
+  INVESTIGATING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ChangeRequestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  DEFERRED
+  IMPLEMENTED
+}
+
+model Stakeholder {
+  id                 String                     @id @default(cuid())
+  organisationId     String
+  productId          String
+  name               String
+  role               String                     @default("")
+  organisationName   String                     @default("")
+  interest           String                     @default("")
+  influence          Int                        @default(3)
+  engagement         StakeholderEngagement      @default(NEUTRAL)
+  engagementApproach String                     @default("")
+  ownerLabel         String?
+  initiativeId       String?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  organisation       Organisation               @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product            Product                    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative         Initiative?                @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+  engagementLogs     StakeholderEngagementLog[]
+
+  @@index([organisationId, productId, engagement])
+  @@index([initiativeId])
+}
+
+model StakeholderEngagementLog {
+  id             String       @id @default(cuid())
+  organisationId String
+  productId      String
+  stakeholderId  String
+  occurredAt     DateTime     @default(now())
+  channel        String       @default("MEETING")
+  purpose        String       @default("") @db.Text
+  summary        String       @db.Text
+  outcome        String       @default("") @db.Text
+  nextAction     String       @default("") @db.Text
+  ownerLabel     String?
+  followUpAt     DateTime?
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stakeholder    Stakeholder  @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, occurredAt])
+  @@index([stakeholderId, followUpAt])
+}
+
+model Issue {
+  id             String       @id @default(cuid())
+  organisationId String
+  productId      String
+  title          String
+  description    String       @default("")
+  severity       Severity     @default(MEDIUM)
+  status         IssueStatus  @default(OPEN)
+  impact         String       @default("")
+  resolution     String       @default("")
+  ownerLabel     String?
+  identifiedAt   DateTime     @default(now())
+  dueAt          DateTime?
+  initiativeId   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?  @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, severity])
+  @@index([initiativeId])
+}
+
+model ChangeRequest {
+  id                String              @id @default(cuid())
+  organisationId    String
+  productId         String
+  title             String
+  description       String              @default("")
+  reason            String              @default("")
+  scopeImpact       String              @default("")
+  scheduleImpact    String              @default("")
+  costImpact        String              @default("")
+  riskImpact        String              @default("")
+  requestedBy       String              @default("")
+  status            ChangeRequestStatus @default(SUBMITTED)
+  decisionRationale String              @default("")
+  ownerLabel        String?
+  initiativeId      String?
+  reviewedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  organisation      Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product           Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative        Initiative?         @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, createdAt])
+  @@index([initiativeId])
+}
+
+enum ProcessAnalysisStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+enum TestCaseStatus {
+  DRAFT
+  READY
+  RETIRED
+}
+
+enum TestExecutionStatus {
+  NOT_RUN
+  PASSED
+  FAILED
+  BLOCKED
+}
+
+enum BenefitStatus {
+  PLANNED
+  BASELINED
+  TRACKING
+  REALISED
+  NOT_REALISING
+  CLOSED
+}
+
+model ProcessAnalysis {
+  id             String                @id @default(cuid())
+  organisationId String
+  productId      String
+  initiativeId   String?
+  title          String
+  purpose        String                @default("")
+  scope          String                @default("")
+  asIs           String                @default("") @db.Text
+  toBe           String                @default("") @db.Text
+  gapAnalysis    String                @default("") @db.Text
+  assumptions    String                @default("")
+  ownerLabel     String?
+  status         ProcessAnalysisStatus @default(DRAFT)
+  version        Int                   @default(1)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  organisation   Organisation          @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?           @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status])
+  @@index([initiativeId])
+}
+
+model TestCase {
+  id             String          @id @default(cuid())
+  organisationId String
+  productId      String
+  initiativeId   String?
+  requirementId  String?
+  key            String
+  title          String
+  objective      String          @default("")
+  preconditions  String          @default("")
+  steps          Json            @default("[]")
+  expectedResult String          @default("") @db.Text
+  status         TestCaseStatus  @default(DRAFT)
+  ownerLabel     String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organisation   Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative     Initiative?     @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+  requirement    Requirement?    @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  executions     TestExecution[]
+
+  @@unique([productId, key])
+  @@index([organisationId, productId, status])
+  @@index([requirementId])
+}
+
+model TestExecution {
+  id              String              @id @default(cuid())
+  organisationId  String
+  productId       String
+  testCaseId      String
+  uatCycleId      String?
+  status          TestExecutionStatus @default(NOT_RUN)
+  actualResult    String              @default("") @db.Text
+  evidenceUrl     String?
+  defectReference String?
+  executedBy      String?
+  executedAt      DateTime            @default(now())
+  notes           String              @default("") @db.Text
+  createdAt       DateTime            @default(now())
+  organisation    Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product         Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  testCase        TestCase            @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  uatCycle        UatCycle?           @relation(fields: [uatCycleId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, executedAt])
+  @@index([uatCycleId, executedAt])
+  @@index([testCaseId, executedAt])
+}
+
+model BenefitMeasure {
+  id                String               @id @default(cuid())
+  organisationId    String
+  productId         String
+  initiativeId      String?
+  title             String
+  description       String               @default("") @db.Text
+  measurementMethod String               @default("") @db.Text
+  unit              String               @default("")
+  baselineValue     Float?
+  targetValue       Float?
+  actualValue       Float?
+  baselineDate      DateTime?
+  targetDate        DateTime?
+  lastMeasuredAt    DateTime?
+  ownerLabel        String?
+  status            BenefitStatus        @default(PLANNED)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  organisation      Organisation         @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product           Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative        Initiative?          @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+  measurements      BenefitMeasurement[]
+
+  @@index([organisationId, productId, status])
+  @@index([initiativeId])
+}
+
+// Immutable point-in-time benefit observations. BenefitMeasure.actualValue remains the latest snapshot.
+model BenefitMeasurement {
+  id               String         @id @default(cuid())
+  organisationId   String
+  productId        String
+  benefitMeasureId String
+  value            Float
+  measuredAt       DateTime       @default(now())
+  source           String         @default("")
+  notes            String         @default("") @db.Text
+  recordedBy       String?
+  createdAt        DateTime       @default(now())
+  organisation     Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  benefitMeasure   BenefitMeasure @relation(fields: [benefitMeasureId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, productId, measuredAt])
+  @@index([benefitMeasureId, measuredAt])
+}
+
+enum UatCycleStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model UatCycle {
+  id                 String          @id @default(cuid())
+  organisationId     String
+  productId          String
+  name               String
+  objective          String          @default("") @db.Text
+  status             UatCycleStatus  @default(PLANNED)
+  startDate          DateTime?
+  endDate            DateTime?
+  ownerLabel         String?
+  participants       Json            @default("[]")
+  acceptanceCriteria String          @default("") @db.Text
+  signOffStatus      String          @default("PENDING")
+  signOffBy          String?
+  signOffAt          DateTime?
+  signOffNotes       String          @default("") @db.Text
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  organisation       Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product            Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  executions         TestExecution[]
+
+  @@index([organisationId, productId, status])
+}
+
+// Evidence metadata and traceability. This model does not store uploaded file bytes.
+
+enum ApprovalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model ApprovalRequest {
+  id              String                @id @default(cuid())
+  organisationId  String
+  productId       String
+  targetType      String
+  targetId        String
+  title           String
+  rationale       String                @db.Text
+  requesterUserId String?
+  approverUserId  String?
+  status          ApprovalRequestStatus @default(PENDING)
+  decisionNote    String                @default("") @db.Text
+  dueAt           DateTime?
+  decidedAt       DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  organisation    Organisation          @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product         Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requester       User?                 @relation("ApprovalRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  approver        User?                 @relation("ApprovalApprover", fields: [approverUserId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, status, dueAt])
+  @@index([approverUserId, status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model EvidenceItem {
+  id                 String       @id @default(cuid())
+  organisationId     String
+  productId          String
+  initiativeId       String?
+  title              String
+  evidenceType       String       @default("DOCUMENT")
+  targetType         String
+  targetId           String
+  description        String       @default("") @db.Text
+  sourceUrl          String?
+  referenceCode      String?
+  capturedAt         DateTime?
+  ownerLabel         String?
+  verificationStatus String       @default("UNVERIFIED")
+  verificationNotes  String       @default("") @db.Text
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organisation       Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  initiative         Initiative?  @relation(fields: [initiativeId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, productId, createdAt])
+  @@index([productId, targetType, targetId])
+  @@index([initiativeId, verificationStatus])
+}

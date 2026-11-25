@@ -1,0 +1,10 @@
+CREATE TABLE "MetricSnapshot" ("id" TEXT NOT NULL,"organisationId" TEXT NOT NULL,"productId" TEXT NOT NULL,"metricId" TEXT NOT NULL,"value" DOUBLE PRECISION NOT NULL,"target" DOUBLE PRECISION NOT NULL,"baseline" DOUBLE PRECISION NOT NULL,"direction" "MetricDirection" NOT NULL,"note" TEXT,"recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "MetricSnapshot_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ActionItemComment" ("id" TEXT NOT NULL,"organisationId" TEXT NOT NULL,"actionItemId" TEXT NOT NULL,"authorId" TEXT NOT NULL,"body" TEXT NOT NULL,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL,CONSTRAINT "ActionItemComment_pkey" PRIMARY KEY ("id"));
+CREATE INDEX "MetricSnapshot_organisationId_productId_metricId_recordedAt_idx" ON "MetricSnapshot"("organisationId","productId","metricId","recordedAt");
+CREATE INDEX "ActionItemComment_organisationId_actionItemId_createdAt_idx" ON "ActionItemComment"("organisationId","actionItemId","createdAt");
+ALTER TABLE "MetricSnapshot" ADD CONSTRAINT "MetricSnapshot_organisationId_fkey" FOREIGN KEY ("organisationId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MetricSnapshot" ADD CONSTRAINT "MetricSnapshot_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MetricSnapshot" ADD CONSTRAINT "MetricSnapshot_metricId_fkey" FOREIGN KEY ("metricId") REFERENCES "Metric"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ActionItemComment" ADD CONSTRAINT "ActionItemComment_organisationId_fkey" FOREIGN KEY ("organisationId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ActionItemComment" ADD CONSTRAINT "ActionItemComment_actionItemId_fkey" FOREIGN KEY ("actionItemId") REFERENCES "ActionItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ActionItemComment" ADD CONSTRAINT "ActionItemComment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
