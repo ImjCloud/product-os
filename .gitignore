@@ -49,3 +49,5 @@ apps/web/.env.*
 # Generated database diagnostic reports
 PRODUCT_OS_DATABASE_GAP_REPORT.sql
 PRODUCT_OS_SCHEMA_DIFF_CHECK.sql
+.vercel
+.env*
